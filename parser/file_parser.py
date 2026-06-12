@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:15:56 by maprunty         #+#    #+#              #
-#    Updated: 2026/05/25 16:17:55 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/11 16:16:18 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 """Tokenises lines, validates syntax, raises ParseError.
@@ -47,7 +47,7 @@ zone simultaneously
 
 from collections.abc import Iterator
 
-from .models import Connection, DroneMap, Meta, Zone
+from domain import Connection, DroneMap, Meta, Zone
 
 
 class ParseError(Exception):
@@ -84,13 +84,12 @@ class Parser:
     indicating the line and cause.
     """
 
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-        self.line: str | None = None
-        self.line_num = 0
-        self._drone_map: DroneMap | None = None
+    def __init__(self):
+        self._line: str | None = None
+        self._line_num = 0
+        self.drone_map: DroneMap | None = None
 
-    def parse_file(self) -> DroneMap:
+    def parse_file(self, file_path: str) -> DroneMap:
         """Parse the input file and return a DroneMap object."""
         parse_dict: dict[str, list[str]] = {
             "start_hub": [],
@@ -98,7 +97,7 @@ class Parser:
             "hub": [],
             "connection": [],
         }
-        with open(self.file_path) as f:
+        with open(file_path) as f:
             lines = self._yd_line(f.readlines())
         line = next(lines)
         nb_drones = int(line[1]) if line[0] == "nb_drones" else None
@@ -109,7 +108,7 @@ class Parser:
                 parse_dict[line[0]].append(line[1])
             else:
                 raise ParseError(
-                    f"Unknown line type: {line[0]} at line {self.line_num}"
+                    f"Unknown line type: {line[0]} at line {self._line_num}"
                 )
         if (
             len(parse_dict["start_hub"]) != 1
@@ -120,16 +119,18 @@ class Parser:
             )
         start_zone = self._parse_zone(parse_dict["start_hub"][0])
         end_zone = self._parse_zone(parse_dict["end_hub"][0])
-        self._drone_map = DroneMap(
+        self.drone_map = DroneMap(
             nb_drones=nb_drones, start_zone=start_zone, end_zone=end_zone
         )
+        self.drone_map.add_zone(start_zone)
+        self.drone_map.add_zone(end_zone)
         self._add_zones(parse_dict["hub"])
         self._add_connections(parse_dict["connection"])
-        return self._drone_map
+        return self.drone_map
 
-    def _yd_line(self, lines: str) -> Iterator[list[str]]:
+    def _yd_line(self, lines: list[str]) -> Iterator[list[str]]:
         for line in lines:
-            self.line_num += 1
+            self._line_num += 1
             if line.strip() != "" and not line.strip().startswith("#"):
                 yield line.strip().split(":")
 
@@ -139,9 +140,9 @@ class Parser:
         return Zone(name=zone, x=int(x), y=int(y), metadata=metadata)
 
     def _add_zones(self, lines: list[str]) -> None:
-        assert self._drone_map is not None
+        assert self.drone_map is not None
         for line in lines:
-            self._drone_map.add_zone(self._parse_zone(line))
+            self.drone_map.add_zone(self._parse_zone(line))
 
     def _parse_connection(self, line: str) -> Connection:
         connection, *meta = line.split()
@@ -149,18 +150,23 @@ class Parser:
             raise ParseError(f"Invalid connection format: {line}")
         a_name, b_name = connection.split("-", 1)
         metadata = self._parse_metadata(meta)
-        assert self._drone_map
+        assert self.drone_map
+        a = self.drone_map.get_zone(a_name)
+        b = self.drone_map.get_zone(b_name)
+        assert a is not None and b is not None, (
+            f"Connection references undefined zones: {a_name}, {b_name}"
+        )
         return Connection(
-            a=self._drone_map.get_zone(a_name),
-            b=self._drone_map.get_zone(b_name),
+            a=a,
+            b=b,
             metadata=metadata,
         )
 
     def _add_connections(self, lines: list[str]) -> None:
-        assert self._drone_map is not None
+        assert self.drone_map is not None
         for line in lines:
             print("Adding connection:", line)
-            self._drone_map.add_connection(self._parse_connection(line))
+            self.drone_map.add_connection(self._parse_connection(line))
 
     def _parse_metadata(self, metadata_str: list[str]) -> Meta:
         metadata = {}

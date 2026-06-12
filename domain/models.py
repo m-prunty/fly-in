@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:27:37 by maprunty         #+#    #+#              #
-#    Updated: 2026/05/25 12:30:43 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/12 05:19:23 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
@@ -39,9 +39,11 @@ turns.
 be prioritized in pathfinding.
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import Enum
+
+from .vector import Vec2
 
 
 class ZoneType(Enum):
@@ -60,16 +62,30 @@ Meta = dict[str, ZoneType | str | int]
 class Zone:
     """Represent a zone in the drone map."""
 
-    name: str
-    x: int
-    y: int
+    name: str | None
+    loc: Vec2
     zone_type: ZoneType = ZoneType.NORMAL
     color: str | None = None
     max_drones: int = 1
-    metadata: Meta = field(default_factory=dict)
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def __str__(self) -> str:
+        return f"Zone(name={self.name}, x={self.x}, y={self.y}, type={self.zone_type.value}, color={self.color}, max_drones={self.max_drones})"
+
+    @property
+    def x(self) -> int:
+        return int(self.loc.x)
+
+    @property
+    def y(self) -> int:
+        return int(self.loc.y)
+
+    def __iter__(self) -> Iterator[int]:
+        """Allow unpacking a Zone instance as (x, y)."""
+        yield self.x
+        yield self.y
 
 
 @dataclass(frozen=True)
@@ -79,7 +95,6 @@ class Connection:
     a: Zone
     b: Zone
     max_link_capacity: int = 1
-    metadata: Meta = field(default_factory=dict)
 
 
 @dataclass
@@ -97,15 +112,22 @@ class DroneMap:
     def __setitem__(self, zone: Zone, connections: list[Connection]) -> None:
         self.adj[zone] = connections
 
-    def __iter__(self) -> Iterable[Zone]:
+    def __iter__(self) -> Iterator[Zone]:
         return iter(self.adj)
+
+    def width(self) -> int:
+        """Calculate the width of the map based on zone coordinates."""
+        return max(self, key=lambda z: z.x).x + 1
+
+    def height(self) -> int:
+        """Calculate the height of the map based on zone coordinates."""
+        return max(self, key=lambda z: z.y).y + 1
 
     def add_zone(self, zone: Zone) -> None:
         if zone not in self.adj:
             self.adj[zone] = []
 
     def get_zone(self, name: str) -> Zone | None:
-        print("get_zone", name)
         return next((z for z in self if z.name == name), None)
 
     def add_connection(self, connection: Connection) -> None:
