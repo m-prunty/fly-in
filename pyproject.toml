@@ -4,4 +4,30 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["mlx",]
+
+[tool.uv.sources]
+mlx = { workspace = true }
+
+[tool.uv.workspace]
+members = ["display/mlx/python",]
+
+[dependency-groups]
+dev = [
+    "flake8>=7.3.0",
+    "flake8-pyproject>=1.2.4",
+    "flake8-docstrings>=1.7.0",   
+    "mypy>=2.0.0",
+]
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+exclude = '(^libs/mlx/)|(^\.venv/)|(/build/)|(^dist/)'
+
+[tool.flake8]
+exclude  = ".git, __pycache__, build, dist, mlx, .venv"
+extend-ignore = "E203, D401"
