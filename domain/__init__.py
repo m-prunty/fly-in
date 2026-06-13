@@ -7,13 +7,13 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/27 19:40:23 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/12 06:02:23 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/12 20:21:27 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
 from .drones import Drone, DroneState
 from .grid import Grid
-from .models import Connection, DroneMap, Meta, Zone, ZoneType
+from .models import Connection, DroneMap, MetaData, Zone, ZoneType
 from .vector import Vec2
 
 __all__ = [
@@ -23,7 +23,7 @@ __all__ = [
     "Grid",
     "Zone",
     "ZoneType",
-    "Meta",
+    "MetaData",
     "Drone",
     "DroneState",
 ]

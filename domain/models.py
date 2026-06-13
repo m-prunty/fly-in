@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:27:37 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/12 05:19:23 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/12 20:25:55 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
@@ -28,8 +28,6 @@ drones can traverse the same connection simultaneously.
 • Drones may move simultaneously, as long as all capacity constraints are respected.
 
 • Zone types:
-9Fly-in
-Drones are interesting.
 ◦ normal – Standard zone with 1 turn movement cost (default)
 ◦ blocked – Inaccessible zone. Drones must not enter or pass through this zone.
 Any path using it is invalid.
@@ -42,6 +40,7 @@ be prioritized in pathfinding.
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import TypedDict
 
 from .vector import Vec2
 
@@ -55,7 +54,13 @@ class ZoneType(Enum):
     PRIORITY = "priority"
 
 
-Meta = dict[str, ZoneType | str | int]
+class MetaData(TypedDict, total=False):
+    """Metadata for a zone, including type and optional max_drones."""
+
+    zone_type: ZoneType
+    color: str
+    max_drones: int | None
+    max_link_capacity: int | None
 
 
 @dataclass(frozen=True)
@@ -72,7 +77,14 @@ class Zone:
         return hash(self.name)
 
     def __str__(self) -> str:
-        return f"Zone(name={self.name}, x={self.x}, y={self.y}, type={self.zone_type.value}, color={self.color}, max_drones={self.max_drones})"
+        return (
+            f"Zone(name={self.name}, "
+            + f"x={self.x}, "
+            + f"y={self.y}, "
+            + f"type={self.zone_type.value}, "
+            + f"color={self.color}, "
+            + f"max_drones={self.max_drones})"
+        )
 
     @property
     def x(self) -> int:
@@ -95,6 +107,25 @@ class Connection:
     a: Zone
     b: Zone
     max_link_capacity: int = 1
+
+
+@dataclass
+class Transit:
+    """Represent a drone in movement between two zones."""
+
+    edge: Connection
+    ticks_total: int = 1
+    ticks_elapsed: int = 0
+
+    @property
+    def progress(self) -> float:
+        """Return interpolated progress from 0.0 to 1.0."""
+        return self.ticks_elapsed / self.ticks_total
+
+    def advance(self) -> bool:
+        """Advance the transit by one tick. Return True if transit is complete."""
+        self.ticks_elapsed += 1
+        return self.ticks_elapsed >= self.ticks_total
 
 
 @dataclass

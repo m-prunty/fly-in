@@ -7,15 +7,14 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/27 18:03:21 by maprunty         #+#    #+#              #
-#    Updated: 2026/05/27 19:39:26 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/13 05:06:33 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 
-from .models import Meta
-from .vector import Vec2
+from .models import Transit, Zone
 
 
 class DroneState(Enum):
@@ -29,9 +28,9 @@ class DroneState(Enum):
 
 @dataclass
 class Drone:
-    """Represents a drone in the simulation."""
+    """Represent a drone in the simulation."""
 
-    id: str
-    position: Vec2
-    state: DroneState = DroneState.IDLE
-    metadata: Meta = field(default_factory=dict)
+    id: int
+    location: Zone
+    transit: Transit | None = None
+    status: DroneState = DroneState.IDLE

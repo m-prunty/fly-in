@@ -7,44 +7,59 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/01/31 01:38:19 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/12 05:39:48 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/13 06:43:59 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 """Grid class to represent a 2D grid of Cell instances."""
 
 from collections.abc import Generator
 
-from .models import Zone
+from .models import DroneMap, Zone
 from .vector import Vec2
 
 
 class Grid:
-    """Grid class has a width, height, and a 2D list of Cell instances."""
+    """Class to represent a 2D grid of None|Zone instances."""
 
-    def __init__(self, width: int, height: int):
-        """Init a grid with the given width and height of Cell instances."""
+    def __init__(self, width: int, height: int, offset: Vec2) -> None:
+        """Initialize the grid with the given width and height."""
         self.width, self.height = width, height
+        self.offset = offset
         self.fill_empty_grid()
 
     def fill_empty_grid(self) -> None:
-        """Fill a grid with empty Cell instances."""
+        """Fill the grid with None values."""
         print(f"Creating grid of size {self.width}x{self.height}")
         self.grid = [
             [None for x in range(self.width)] for y in range(self.height)
         ]
 
-    def isvalid(self, v: Vec2 | tuple[int, int] | Zone) -> bool:
+    def to_index(self, pos: Vec2 | tuple[int, int]) -> Vec2:
+        """Convert a position to a grid index."""
+        if isinstance(pos, tuple):
+            pos = Vec2(*pos)
+        return pos - self.offset
+
+    @classmethod
+    def from_map(cls, drone_map: DroneMap) -> "Grid":
+        """Create a grid from a drone map."""
+        grid = cls(drone_map.width(), drone_map.height())
+        for zone in drone_map.adj:
+            grid[zone.loc] = zone
+        return grid
+
+    def isvalid(self, v: Vec2 | tuple[int, int]) -> bool:
         """Check if a Vec2 instance is within the bounds of the grid."""
         if isinstance(v, tuple):
             v = Vec2(*v)
         return (
             v.x is not None
             and v.y is not None
-            and 0 <= v.x < self.width
-            and 0 <= v.y < self.height
+            and self.offset.x <= v.x < self.width
+            and self.offset.y <= v.y < self.height
         )
 
-    def __getitem__(self, key: tuple[int, int] | Vec2 | Zone) -> Zone:
+    def __getitem__(self, key: tuple[int, int] | Vec2) -> Zone:
         """Get a cell from the grid using a tuple of (x, y) or a Vec2 instance.
 
         Where th key is out of bounds, return a Zone with location (0,0)
@@ -52,7 +67,7 @@ class Grid:
         """
         try:
             if self.isvalid(key):
-                x, y = key
+                x, y = self.to_index(key)
                 z = self.grid[int(y)][int(x)]
                 if z is not None:
                     return z
@@ -60,10 +75,19 @@ class Grid:
         except Exception:
             return Zone(None, Vec2(0, 0))
 
+    def __setitem__(self, key: tuple[int, int] | Vec2, value: Zone) -> None:
+        """Set a cell in the grid using a tuple of (x, y) or a Vec2 instance."""
+        if self.isvalid(key):
+            x, y = key
+            self.grid[int(y)][int(x)] = value
+        else:
+            raise IndexError(f"Key {key} is out of bounds")
+
     def __iter__(self) -> Generator[Zone, None, None]:
         """Iterate over all cells in the grid."""
         for y in self.grid:
-            yield from y
+            if isinstance(y, Zone):
+                yield y
 
     def __repr__(self) -> str:
         """An evalutable string representation of a Grid instance."""
@@ -108,30 +132,3 @@ class Grid:
         r_str += f"Path: {self.path_to_str()}"
         return r_str
 """
-
-
-class Graph(Protocol):
-    """Graph protocol for maze generation and pathfinding."""
-
-    grid: Grid
-
-    def edges(self, cell: Cell) -> Iterable[Edge]:
-        """Returns list of edges of cell."""
-        ...
-
-
-class GridGraph:
-    """Graph for maze generation.
-
-    Returns all neighbours of cell, even if wall between them.
-    """
-
-    def __init__(self, grid: Grid) -> None:
-        """Initializes GenGraph with a grid."""
-        self.grid = grid
-
-    def edges(self, cell: Cell) -> Iterable[Edge]:
-        """Returns list of edges of cell."""
-        cell_nb = self.grid.neighbour(cell)
-        for _, nb in cell_nb.items():
-            yield Edge(cell, nb)
