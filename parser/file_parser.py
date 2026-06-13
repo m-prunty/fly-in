@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:15:56 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/11 16:16:18 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/13 05:35:33 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 """Tokenises lines, validates syntax, raises ParseError.
@@ -47,7 +47,7 @@ zone simultaneously
 
 from collections.abc import Iterator
 
-from domain import Connection, DroneMap, Meta, Zone
+from domain import Connection, DroneMap, MetaData, Vec2, Zone
 
 
 class ParseError(Exception):
@@ -58,33 +58,7 @@ class ParseError(Exception):
 
 
 class Parser:
-    """Parser for the drone map input file.
-
-    VII.4
-    Parser Constraints
-    The input file must respect the expected structure and syntax:
-    • The first line must define the number of drones using nb_drones:
-    <positive_integer>.
-    • The program must be able to handle any number of drones.
-    • There must be exactly one start_hub: zone and one end_hub: zone.
-    • Each zone must have a unique name and valid integer coordinates.
-    • Zone names can use any valid characters but dashes and spaces.
-    • Connections must link only previously defined zones using connection:
-    [metadata].
-    <zone1>-<zone2>
-    • The same connection must not appear more than once (e.g., a-b and b-a are con-
-    sidered duplicates).
-    • Any metadata block (e.g., [zone=... color=...] for zones, [max_link_capacity=...]
-    for connections) must be syntactically valid.
-    • Zone types must be one of: normal, blocked, restricted, priority. Any invalid
-    type must raise a parsing error.
-    • Capacity values (max_drones for zones, max_link_capacity for connections) must
-    be positive integers.
-    • Any other parsing error must stop the program and return a clear error message
-    indicating the line and cause.
-    """
-
-    def __init__(self):
+    def __init__(self) -> None:
         self._line: str | None = None
         self._line_num = 0
         self.drone_map: DroneMap | None = None
@@ -137,7 +111,7 @@ class Parser:
     def _parse_zone(self, line: str) -> Zone:
         zone, x, y, *meta = line.split()
         metadata = self._parse_metadata(meta)
-        return Zone(name=zone, x=int(x), y=int(y), metadata=metadata)
+        return Zone(name=zone, loc=Vec2(int(x), int(y)), **metadata)
 
     def _add_zones(self, lines: list[str]) -> None:
         assert self.drone_map is not None
@@ -159,7 +133,6 @@ class Parser:
         return Connection(
             a=a,
             b=b,
-            metadata=metadata,
         )
 
     def _add_connections(self, lines: list[str]) -> None:
@@ -168,12 +141,11 @@ class Parser:
             print("Adding connection:", line)
             self.drone_map.add_connection(self._parse_connection(line))
 
-    def _parse_metadata(self, metadata_str: list[str]) -> Meta:
-        metadata = {}
+    def _parse_metadata(self, metadata_str: list[str]) -> MetaData:
         if not metadata_str:
-            return metadata
+            return MetaData()
         meta_str = " ".join(metadata_str)
         if not (meta_str.startswith("[") and meta_str.endswith("]")):
             raise ParseError(f"Invalid metadata format: {meta_str}")
         meta_str = meta_str[1:-1].strip()
-        return dict(item.split("=", 1) for item in meta_str.split())
+        return MetaData(item.split("=", 1) for item in meta_str.split())
