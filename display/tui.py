@@ -2,20 +2,19 @@
 # *************************************************************************** #
 #                                                                             #
 #                                                        :::      ::::::::    #
-#    terminal.py                                       :+:      :+:    :+:    #
+#    tui.py                                            :+:      :+:    :+:    #
 #                                                    +:+ +:+         +:+      #
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/06/11 15:27:23 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/13 06:20:56 by maprunty        ###   ########.fr        #
+#    Updated: 2026/06/13 06:22:01 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
 from typing import Protocol
 
-from sim import MoveEvent, Simulation
-
 from domain import DroneMap, Grid
+from simulation import MoveEvent, Simulation
 
 
 class Display(Protocol):
@@ -27,7 +26,7 @@ class TuiDisplay:
     def __init__(self, drone_map: DroneMap):
         self._grid = Grid.from_map(drone_map)
 
-    def render(self, sim: Simulation) -> None:
+    def render(self):
         print("Rendering TUI...")
         adj_sorted = sorted(self.drone_map.adj, key=lambda z: (z.y, z.x))
         y_curr = min(z.y for z in adj_sorted)
