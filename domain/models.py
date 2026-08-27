@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:27:37 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/12 20:25:55 by maprunty        ###   ########.fr        #
+#    Updated: 2026/08/27 18:04:46 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
@@ -137,6 +137,15 @@ class DroneMap:
     end_zone: Zone
     adj: dict[Zone, list[Connection]] = field(default_factory=dict)
 
+    def __str__(self) -> str:
+        return (
+            f"DroneMap(nb_drones={self.nb_drones}, "
+            + f"start_zone={self.start_zone.name}, "
+            + f"end_zone={self.end_zone.name}, "
+            + f"zones={len(self.adj)})"
+            + f"\tZones: {[zone.name for zone in self.adj]}"
+        )
+
     def __getitem__(self, zone: Zone) -> list[Connection]:
         return self.adj.get(zone, [])
 
@@ -146,13 +155,30 @@ class DroneMap:
     def __iter__(self) -> Iterator[Zone]:
         return iter(self.adj)
 
-    def width(self) -> int:
-        """Calculate the width of the map based on zone coordinates."""
-        return max(self, key=lambda z: z.x).x + 1
+    @property
+    def limits(self) -> tuple[Vec2, Vec2]:
+        """Calculate the minimum and maximum coordinates of the map."""
+        if not self.adj:
+            return Vec2(0, 0), Vec2(0, 0)
+        min_x = min(zone.x for zone in self.adj)
+        min_y = min(zone.y for zone in self.adj)
+        max_x = max(zone.x for zone in self.adj)
+        max_y = max(zone.y for zone in self.adj)
+        return Vec2(min_x, min_y), Vec2(max_x, max_y)
 
-    def height(self) -> int:
-        """Calculate the height of the map based on zone coordinates."""
-        return max(self, key=lambda z: z.y).y + 1
+    @property
+    def offset(self) -> Vec2:
+        """Calculate the minimum x and y coordinates among all zones."""
+        if not self.adj:
+            return Vec2(0, 0)
+        return self.limits[0]
+
+    @property
+    def dimensions(self) -> Vec2:
+        """Calculate the width and height of the map based on zone coordinates."""
+        if not self.adj:
+            return Vec2(0, 0)
+        return self.limits[1] - self.limits[0]
 
     def add_zone(self, zone: Zone) -> None:
         if zone not in self.adj:
