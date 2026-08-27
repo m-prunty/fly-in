@@ -6,7 +6,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/01/31 01:37:00 by maprunty         #+#    #+#              #
-#    Updated: 2026/05/14 12:57:00 by maprunty        ###   ########.fr        #
+#    Updated: 2026/08/27 18:36:15 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 """TODO: Short module summary.
@@ -34,6 +34,10 @@ class Vec2:
         if mag == 0:
             raise ValueError("Cannot normalize zero vector")
         return self / mag
+
+    def to_tuple(self) -> tuple[int, int]:
+        """Return a tuple representation of the vector."""
+        return int(self.x), int(self.y)
 
     def __add__(self, other: "Vec2") -> "Vec2":
         """Add a vec2 instance with another."""
