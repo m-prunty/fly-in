@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/06/11 15:24:56 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/13 05:56:47 by maprunty        ###   ########.fr        #
+#    Updated: 2026/08/27 06:02:07 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 from display import TuiDisplay
@@ -20,7 +20,7 @@ def main():
     dm = Parser().parse_file("maps/easy/02_simple_fork.txt")
     sim = Simulation(drone_map=dm)
     disp = TuiDisplay(dm)
-    disp.render(sim)
+    # disp.render(sim)
 
 
 if __name__ == "__main__":

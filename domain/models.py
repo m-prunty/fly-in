@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:27:37 by maprunty         #+#    #+#              #
-#    Updated: 2026/08/26 21:16:45 by maprunty        ###   ########.fr        #
+#    Updated: 2026/09/05 22:45:33 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
@@ -86,6 +86,11 @@ class Zone:
             + f"max_drones={self.max_drones})"
         )
 
+    def __iter__(self) -> Iterator[int]:
+        """Allow unpacking a Zone instance as (x, y)."""
+        yield self.x
+        yield self.y
+
     @property
     def x(self) -> int:
         return int(self.loc.x)
@@ -93,11 +98,6 @@ class Zone:
     @property
     def y(self) -> int:
         return int(self.loc.y)
-
-    def __iter__(self) -> Iterator[int]:
-        """Allow unpacking a Zone instance as (x, y)."""
-        yield self.x
-        yield self.y
 
 
 @dataclass(frozen=True)
@@ -138,15 +138,12 @@ class DroneMap:
     adj: dict[Zone, list[Connection]] = field(default_factory=dict)
 
     def __str__(self) -> str:
-        print(">>>>>>>>>>>>>>>>>>>>")
         return (
-            self.__class__.__name__
-            + "("
-            + f"\nnb_drones={self.nb_drones}, "
-            + f"\nstart_zone={self.start_zone}, "
-            + f"\nend_zone={self.end_zone}, "
-            + f"\nadj= {'\n '.join(f'{zone}' for zone, connections in self.adj.items())}"
-            + f"\n{self.get_offset().__str__()}"
+            f"DroneMap(nb_drones={self.nb_drones}, "
+            + f"start_zone={self.start_zone.name}, "
+            + f"end_zone={self.end_zone.name}, "
+            + f"zones={len(self.adj)})"
+            + f"\tZones: {[zone.name for zone in self.adj]}"
         )
 
     def __getitem__(self, zone: Zone) -> list[Connection]:
@@ -158,13 +155,23 @@ class DroneMap:
     def __iter__(self) -> Iterator[Zone]:
         return iter(self.adj)
 
-    def width(self) -> int:
-        """Calculate the width of the map based on zone coordinates."""
-        return max(self, key=lambda z: z.x).x + 1
+    @property
+    def limits(self) -> tuple[Vec2, Vec2]:
+        """Calculate the minimum and maximum coordinates of the map."""
+        if not self.adj:
+            return Vec2(0, 0), Vec2(0, 0)
+        min_x = min(zone.x for zone in self.adj)
+        min_y = min(zone.y for zone in self.adj)
+        max_x = max(zone.x for zone in self.adj)
+        max_y = max(zone.y for zone in self.adj)
+        return Vec2(min_x, min_y), Vec2(max_x, max_y)
 
-    def height(self) -> int:
-        """Calculate the height of the map based on zone coordinates."""
-        return max(self, key=lambda z: z.y).y + 1
+    @property
+    def dimensions(self) -> Vec2:
+        """Calculate the width and height of the map based on zone coordinates."""
+        if not self.adj:
+            return Vec2(0, 0)
+        return self.limits[1] - self.limits[0]
 
     def get_offset(self) -> Vec2:
         """Calculate the offset of the map based on zone coordinates."""
