@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/01/31 01:38:19 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/13 06:43:59 by maprunty        ###   ########.fr        #
+#    Updated: 2026/08/27 00:00:51 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 """Grid class to represent a 2D grid of Cell instances."""
@@ -26,6 +26,18 @@ class Grid:
         self.width, self.height = width, height
         self.offset = offset
         self.fill_empty_grid()
+        print(self)
+
+    def __str__(self) -> str:
+        """Return a string representation of the grid."""
+        r_str = ""
+        for y in range(self.height):
+            for x in range(self.width):
+                r_str += f"{x + self.offset.x},{y + self.offset.y} "
+                r_str += " "
+
+            r_str += "\n"
+        return r_str
 
     def fill_empty_grid(self) -> None:
         """Fill the grid with None values."""
@@ -43,9 +55,16 @@ class Grid:
     @classmethod
     def from_map(cls, drone_map: DroneMap) -> "Grid":
         """Create a grid from a drone map."""
-        grid = cls(drone_map.width(), drone_map.height())
+        grid = cls(
+            drone_map.width(), drone_map.height(), drone_map.get_offset()
+        )
+        print(drone_map)
+        print(
+            f"Grid offset: {grid.offset}, width: {grid.width}, height: {grid.height}"
+        )
         for zone in drone_map.adj:
-            grid[zone.loc] = zone
+            print(f"Adding zone {zone} to grid at {zone.loc + grid.offset}")
+            grid[zone.loc - grid.offset] = zone
         return grid
 
     def isvalid(self, v: Vec2 | tuple[int, int]) -> bool:

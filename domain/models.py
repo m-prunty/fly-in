@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:27:37 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/12 20:25:55 by maprunty        ###   ########.fr        #
+#    Updated: 2026/08/26 21:16:45 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
@@ -137,6 +137,18 @@ class DroneMap:
     end_zone: Zone
     adj: dict[Zone, list[Connection]] = field(default_factory=dict)
 
+    def __str__(self) -> str:
+        print(">>>>>>>>>>>>>>>>>>>>")
+        return (
+            self.__class__.__name__
+            + "("
+            + f"\nnb_drones={self.nb_drones}, "
+            + f"\nstart_zone={self.start_zone}, "
+            + f"\nend_zone={self.end_zone}, "
+            + f"\nadj= {'\n '.join(f'{zone}' for zone, connections in self.adj.items())}"
+            + f"\n{self.get_offset().__str__()}"
+        )
+
     def __getitem__(self, zone: Zone) -> list[Connection]:
         return self.adj.get(zone, [])
 
@@ -153,6 +165,12 @@ class DroneMap:
     def height(self) -> int:
         """Calculate the height of the map based on zone coordinates."""
         return max(self, key=lambda z: z.y).y + 1
+
+    def get_offset(self) -> Vec2:
+        """Calculate the offset of the map based on zone coordinates."""
+        min_x = min(self, key=lambda z: z.x).x
+        min_y = min(self, key=lambda z: z.y).y
+        return Vec2(min_x, min_y)
 
     def add_zone(self, zone: Zone) -> None:
         if zone not in self.adj:
