@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/01/31 01:38:19 by maprunty         #+#    #+#              #
-#    Updated: 2026/09/05 23:39:11 by maprunty        ###   ########.fr        #
+#    Updated: 2026/09/06 07:16:38 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 """Grid class to represent a 2D grid of Cell instances."""
@@ -26,14 +26,14 @@ class Grid:
         print(
             f"Creating grid with dimensions {dimensions} and offset {offset}"
         )
-        self.dimensions = dimensions
-        self.offset = offset
+        self.dimensions: Vec2 = dimensions
+        self.offset: Vec2 = offset
         self.fill_empty_grid()
 
     def __getitem__(self, pos: Vec2 | tuple[int, int]) -> Zone | None:
         """Return the cell at the given position."""
-        x, y = self.to_index(pos)
-        print(x, y, pos)
+        x, y = pos
+        # print(x, y, pos)
         if not self.isvalid((x, y)):
             raise IndexError(f"Key {x, y, pos} is out of bounds")
         return self.grid[y][x]
@@ -69,19 +69,19 @@ class Grid:
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 if cell:
-                    r_str += f"{cell.name} at {x},{y}  "
+                    r_str += f"{cell} at {x},{y}  "
             r_str += "\n"
         return r_str
 
     @property
     def width(self) -> int:
         """Return the width of the grid."""
-        return self.dimensions.x
+        return int(self.dimensions.x + 1)
 
     @property
     def height(self) -> int:
         """Return the height of the grid."""
-        return self.dimensions.y
+        return int(self.dimensions.y + 1)
 
     @classmethod
     def from_map(cls, drone_map: DroneMap) -> "Grid":
@@ -95,9 +95,8 @@ class Grid:
     def fill_empty_grid(self) -> None:
         """Fill the grid with None values."""
         print(f"Creating grid of size {self.width}x{self.height}")
-        self.grid = [
-            [None for x in range(self.width + 1)]
-            for y in range(self.height + 1)
+        self.grid: list[list[Zone | None]] = [
+            [None for x in range(self.width)] for y in range(self.height)
         ]
 
     def to_index(self, pos: Vec2 | tuple[int, int]) -> tuple[int, int]:
@@ -109,4 +108,4 @@ class Grid:
     def isvalid(self, pos: Vec2 | tuple[int, int]) -> bool:
         """Return whether a world coordinate lies inside the grid."""
         x, y = pos
-        return 0 <= x < self.width + 1 and 0 <= y < self.height + 1
+        return 0 <= x < self.width and 0 <= y < self.height
