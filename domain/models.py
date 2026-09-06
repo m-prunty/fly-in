@@ -7,7 +7,7 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/25 01:27:37 by maprunty         #+#    #+#              #
-#    Updated: 2026/09/05 22:45:33 by maprunty        ###   ########.fr        #
+#    Updated: 2026/09/06 09:02:21 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
@@ -69,7 +69,7 @@ class Zone:
 
     name: str | None
     loc: Vec2
-    zone_type: ZoneType = ZoneType.NORMAL
+    zone: ZoneType = ZoneType.NORMAL
     color: str | None = None
     max_drones: int = 1
 
@@ -81,7 +81,7 @@ class Zone:
             f"Zone(name={self.name}, "
             + f"x={self.x}, "
             + f"y={self.y}, "
-            + f"type={self.zone_type.value}, "
+            + f"type={self.zone}, "
             + f"color={self.color}, "
             + f"max_drones={self.max_drones})"
         )
@@ -100,7 +100,7 @@ class Zone:
         return int(self.loc.y)
 
 
-@dataclass(frozen=True)
+@dataclass
 class Connection:
     """Represent a connection between two zones, optional capacity."""
 
@@ -108,24 +108,8 @@ class Connection:
     b: Zone
     max_link_capacity: int = 1
 
-
-@dataclass
-class Transit:
-    """Represent a drone in movement between two zones."""
-
-    edge: Connection
-    ticks_total: int = 1
-    ticks_elapsed: int = 0
-
-    @property
-    def progress(self) -> float:
-        """Return interpolated progress from 0.0 to 1.0."""
-        return self.ticks_elapsed / self.ticks_total
-
-    def advance(self) -> bool:
-        """Advance the transit by one tick. Return True if transit is complete."""
-        self.ticks_elapsed += 1
-        return self.ticks_elapsed >= self.ticks_total
+    def adjusted_d(self, offset: Vec2) -> Vec2:
+        return (self.a.loc + offset) - (self.b.loc + offset)
 
 
 @dataclass
@@ -191,3 +175,22 @@ class DroneMap:
         self.add_zone(connection.b)
         self[connection.a].append(connection)
         self[connection.b].append(connection)
+
+
+@dataclass
+class Transit:
+    """Represent a drone in movement between two zones."""
+
+    edge: Connection
+    ticks_total: int = 1
+    ticks_elapsed: int = 0
+
+    @property
+    def progress(self) -> float:
+        """Return interpolated progress from 0.0 to 1.0."""
+        return self.ticks_elapsed / self.ticks_total
+
+    def advance(self) -> bool:
+        """Advance the transit by one tick. Return True if transit is complete."""
+        self.ticks_elapsed += 1
+        return self.ticks_elapsed >= self.ticks_total
