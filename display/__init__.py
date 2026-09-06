@@ -7,15 +7,15 @@
 #    By: maprunty <maprunty@student.42heilbronn.d  +#+  +:+       +#+         #
 #                                                +#+#+#+#+#+   +#+            #
 #    Created: 2026/05/27 19:42:27 by maprunty         #+#    #+#              #
-#    Updated: 2026/06/13 06:20:51 by maprunty        ###   ########.fr        #
+#    Updated: 2026/09/06 08:08:45 by maprunty        ###   ########.fr        #
 #                                                                             #
 # *************************************************************************** #
 
-from .tui import TuiDisplay
+from .tui import AsciiDisplay, ConsoleDisplay, Display, NCursesDisplay
 
-__all__ = ["TuiDisplay"]
-# from mlx import Mlx
-
-# from .app import App
-
-# __all__ = ["App", "Mlx"]
+__all__ = [
+    "Display",
+    "NCursesDisplay",
+    "AsciiDisplay",
+    "ConsoleDisplay",
+]
